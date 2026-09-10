@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InstaX</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Tahoma,Arial,sans-serif;
+background:#fafafa;
+color:#111
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:650px;margin:auto;background:#fff;min-height:100vh;padding-bottom:70px}
+header{
+height:60px;
+border-bottom:1px solid #ddd;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 15px;
+position:sticky;
+top:0;
+background:#fff;
+z-index:20
+}
+.logo{font-size:27px;font-weight:bold;font-style:italic}
+.headerBtns{display:flex;gap:15px}
+.headerBtns button{border:0;background:none;font-size:24px}
+
+.stories{
+display:flex;
+gap:14px;
+padding:14px;
+overflow-x:auto;
+border-bottom:1px solid #ddd
+}
+.story{
+min-width:68px;
+text-align:center;
+font-size:11px
+}
+.story img{
+width:62px;
+height:62px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid #e1306c;
+padding:2px
+}
+
+.post{
+background:#fff;
+border-bottom:1px solid #ddd;
+margin-bottom:8px
+}
+.postHead{
+height:56px;
+display:flex;
+align-items:center;
+gap:10px;
+padding:8px 12px
+}
+.postHead img{
+width:38px;
+height:38px;
+border-radius:50%;
+object-fit:cover
+}
+.username{font-weight:bold;flex:1}
+.postImage{
+width:100%;
+display:block;
+max-height:700px;
+object-fit:cover
+}
+.actions{
+display:flex;
+gap:16px;
+padding:10px 13px
+}
+.actions button{
+border:0;
+background:none;
+font-size:24px
+}
+.save{margin-right:auto}
+.liked{color:#ed315d}
+.info{
+padding:0 13px 8px;
+font-size:14px
+}
+.caption b{margin-left:5px}
+.muted{color:#777}
+
+nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+height:62px;
+background:#fff;
+border-top:1px solid #ddd;
+display:flex;
+justify-content:center;
+z-index:30
+}
+nav div{
+width:650px;
+display:flex;
+justify-content:space-around;
+align-items:center
+}
+nav button{
+border:0;
+background:none;
+font-size:25px
+}
+
+.page{display:none}
+.page.active{display:block}
+
+.profile{padding:22px 15px}
+.profileTop{
+display:flex;
+gap:22px;
+align-items:center
+}
+.profileTop img{
+width:90px;
+height:90px;
+border-radius:50%;
+object-fit:cover
+}
+.stats{
+display:flex;
+gap:20px;
+text-align:center
+}
+.stats b{
+display:block;
+font-size:18px
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:2px
+}
+.grid img{
+width:100%;
+aspect-ratio:1;
+object-fit:cover
+}
+
+.search{
+margin:15px;
+background:#eee;
+border-radius:10px;
+padding:10px
+}
+.search input{
+border:0;
+outline:0;
+background:none;
+width:100%
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:#0008;
+display:none;
+align-items:flex-end;
+z-index:100
+}
+.modal.show{display:flex}
+.box{
+width:min(650px,100%);
+margin:auto;
+background:#fff;
+border-radius:20px 20px 0 0;
+padding:20px;
+max-height:92vh;
+overflow:auto
+}
+.close{
+float:left;
+border:0;
+background:none;
+font-size:20px
+}
+.field{
+width:100%;
+padding:12px;
+margin:7px 0;
+border:1px solid #ddd;
+border-radius:10px;
+outline:none
+}
+.primary{
+width:100%;
+border:0;
+background:#0095f6;
+color:white;
+padding:12px;
+border-radius:10px;
+margin-top:8px
+}
+.preview{
+display:none;
+width:100%;
+max-height:300px;
+object-fit:contain;
+margin:10px 0
+}
+.comment{
+padding:10px;
+border-bottom:1px solid #eee
+}
+.commentRow{
+display:flex;
+gap:6px;
+margin-top:10px
+}
+.commentRow input{flex:1}
+.commentRow button{
+background:#0095f6;
+color:#fff;
+border:0;
+border-radius:8px;
+padding:8px 14px
+}
+.empty{
+text-align:center;
+padding:50px 20px;
+color:#777
+}
+.toast{
+position:fixed;
+bottom:80px;
+left:50%;
+transform:translateX(-50%);
+background:#111;
+color:white;
+padding:10px 18px;
+border-radius:20px;
+opacity:0;
+transition:.3s;
+z-index:200
+}
+.toast.show{opacity:1}
+
+.dark{
+background:#000;
+color:#eee
+}
+.dark .app,
+.dark header,
+.dark nav,
+.dark .post,
+.dark .box{
+background:#111;
+color:#eee
+}
+.dark header,
+.dark nav,
+.dark .post{
+border-color:#333
+}
+.dark .search{
+background:#222
+}
+
+@media(min-width:700px){
+body{background:#eee}
+.app{border-left:1px solid #ddd;border-right:1px solid #ddd}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+<div class="logo">InstaX</div>
+
+<div class="headerBtns">
+<button onclick="openCreate()">＋</button>
+<button onclick="toggleDark()">☾</button>
+</div>
+</header>
+
+<!-- HOME -->
+
+<section id="home" class="page active">
+
+<div class="stories">
+
+<div class="story" onclick="openCreate()">
+<img id="storyMe">
+<span>استوری شما ＋</span>
+</div>
+
+<div class="story">
+<img src="https://i.pravatar.cc/150?img=47">
+<span>سارا</span>
+</div>
+
+<div class="story">
+<img src="https://i.pravatar.cc/150?img=13">
+<span>علی</span>
+</div>
+
+<div class="story">
+<img src="https://i.pravatar.cc/150?img=32">
+<span>نگار</span>
+</div>
+
+<div class="story">
+<img src="https://i.pravatar.cc/150?img=44">
+<span>مریم</span>
+</div>
+
+</div>
+
+<div id="feed">
+<div class="empty">در حال دریافت پست‌ها...</div>
+</div>
+
+</section>
+
+<!-- SEARCH -->
+
+<section id="searchPage" class="page">
+
+<div class="search">
+<input
+id="searchInput"
+placeholder="جستجوی کاربر یا کپشن..."
+oninput="searchPosts(this.value)"
+>
+</div>
+
+<div id="searchResults"></div>
+
+</section>
+
+<!-- PROFILE -->
+
+<section id="profile" class="page">
+
+<div class="profile">
+
+<div class="profileTop">
+
+<img id="myAvatar">
+
+<div>
+
+<h2 id="myName">کاربر</h2>
+
+<div class="stats">
+
+<div>
+<b id="postCount">0</b>
+پست
+</div>
+
+<div>
+<b id="followers">0</b>
+دنبال‌کننده
+</div>
+
+<div>
+<b>0</b>
+دنبال‌شونده
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<br>
+
+<button onclick="editProfile()">
+✏️ ویرایش پروفایل
+</button>
+
+<hr>
+
+<div id="myGrid" class="grid"></div>
+
+</div>
+
+</section>
+
+<!-- MESSAGES -->
+
+<section id="messages" class="page">
+
+<div class="profile">
+
+<h2>💬 پیام‌ها</h2>
+
+<div class="comment">
+<b>سارا</b><br>
+سلام 👋
+</div>
+
+<div class="comment">
+<b>علی</b><br>
+پست جدیدت عالی بود 🔥
+</div>
+
+<div class="comment">
+<b>نگار</b><br>
+سلام 😊
+</div>
+
+</div>
+
+</section>
+
+<nav>
+<div>
+<button onclick="showPage('home')">⌂</button>
+<button onclick="showPage('searchPage')">⌕</button>
+<button onclick="openCreate()">＋</button>
+<button onclick="showPage('messages')">♡</button>
+<button onclick="showPage('profile')">◉</button>
+</div>
+</nav>
+
+</div>
+
+<!-- CREATE POST -->
+
+<div id="createModal" class="modal">
+
+<div class="box">
+
+<button class="close" onclick="closeModal('createModal')">✕</button>
+
+<h2>ایجاد پست</h2>
+
+<input
+class="field"
+type="file"
+id="postFile"
+accept="image/*"
+onchange="previewImage(event)"
+>
+
+<img id="preview" class="preview">
+
+<textarea
+class="field"
+id="caption"
+rows="4"
+placeholder="کپشن خود را بنویسید..."
+></textarea>
+
+<input
+class="field"
+id="hashtags"
+placeholder="#هشتگ #زندگی"
+>
+
+<button class="primary" onclick="publishPost()">
+انتشار پست
+</button>
+
+</div>
+
+</div>
+
+<!-- COMMENTS -->
+
+<div id="commentModal" class="modal">
+
+<div class="box">
+
+<button class="close" onclick="closeModal('commentModal')">✕</button>
+
+<h2>نظرات</h2>
+
+<div id="commentList"></div>
+
+<div class="commentRow">
+
+<input
+class="field"
+id="commentInput"
+placeholder="نظر بنویسید..."
+>
+
+<button onclick="sendComment()">
+ارسال
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- PROFILE -->
+
+<div id="profileModal" class="modal">
+
+<div class="box">
+
+<button class="close" onclick="closeModal('profileModal')">✕</button>
+
+<h2>پروفایل</h2>
+
+<input
+class="field"
+id="profileName"
+placeholder="نام شما"
+>
+
+<input
+class="field"
+type="file"
+id="avatarFile"
+accept="image/*"
+>
+
+<button class="primary" onclick="saveProfile()">
+ذخیره
+</button>
+
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+/* =====================================================
+   تنظیمات Supabase
+   ===================================================== */
+
+const SUPABASE_URL="YOUR_SUPABASE_URL";
+
+const SUPABASE_KEY="YOUR_SUPABASE_ANON_KEY";
+
+const supabaseClient=
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+
+/* =====================================================
+   کاربر بدون ثبت نام
+   ===================================================== */
+
+let localUser=
+localStorage.getItem("instax_user");
+
+if(!localUser){
+
+localUser=
+"guest_"+Math.random()
+.toString(36)
+.substring(2,10);
+
+localStorage.setItem(
+"instax_user",
+localUser
+);
+
+}
+
+let currentPost=null;
+
+
+/* =====================================================
+   پروفایل
+   ===================================================== */
+
+let profile=
+JSON.parse(
+localStorage.getItem("instax_profile")||"null"
+);
+
+if(!profile){
+
+profile={
+name:"کاربر "+localUser.substring(6),
+avatar:"https://i.pravatar.cc/150?img=12"
+};
+
+localStorage.setItem(
+"instax_profile",
+JSON.stringify(profile)
+);
+
+}
+
+function updateProfileUI(){
+
+document.getElementById("myName").textContent=
+profile.name;
+
+document.getElementById("myAvatar").src=
+profile.avatar;
+
+document.getElementById("storyMe").src=
+profile.avatar;
+
+}
+
+updateProfileUI();
+
+
+/* =====================================================
+   صفحه‌ها
+   ===================================================== */
+
+function showPage(id){
+
+document
+.querySelectorAll(".page")
+.forEach(x=>x.classList.remove("active"));
+
+document
+.getElementById(id)
+.classList.add("active");
+
+if(id==="home")
+loadPosts();
+
+if(id==="profile")
+loadMyPosts();
+
+}
+
+
+/* =====================================================
+   دریافت پست‌ها
+   ===================================================== */
+
+async function loadPosts(){
+
+const feed=document.getElementById("feed");
+
+feed.innerHTML=
+'<div class="empty">در حال دریافت...</div>';
+
+const {data,error}=await supabaseClient
+.from("posts")
+.select("*")
+.order("created_at",{ascending:false});
+
+if(error){
+
+console.error(error);
+
+feed.innerHTML=
+'<div class="empty">خطا در اتصال به سرور</div>';
+
+return;
+
+}
+
+if(!data.length){
+
+feed.innerHTML=
+'<div class="empty">هنوز پستی منتشر نشده.<br>اولین پست را تو منتشر کن 📸</div>';
+
+return;
+
+}
+
+feed.innerHTML="";
+
+data.forEach(post=>{
+
+renderPost(post,feed);
+
+});
+
+}
+
+
+/* =====================================================
+   نمایش پست
+   ===================================================== */
+
+function renderPost(post,container){
+
+let article=document.createElement("article");
+
+article.className="post";
+
+article.innerHTML=`
+
+<div class="postHead">
+
+<img
+src="${post.avatar||"https://i.pravatar.cc/150?img=12"}"
+>
+
+<span class="username">
+${escapeHTML(post.username||"کاربر")}
+</span>
+
+<button onclick="deletePost('${post.id}','${post.user_id}')">
+•••
+</button>
+
+</div>
+
+<img
+class="postImage"
+src="${post.image_url}"
+ondblclick="likePost('${post.id}')"
+>
+
+<div class="actions">
+
+<button
+onclick="likePost('${post.id}')"
+id="like-${post.id}"
+>
+♡
+</button>
+
+<button
+onclick="openComments('${post.id}')"
+>
+💬
+</button>
+
+<button onclick="sharePost()">
+➤
+</button>
+
+<button
+class="save"
+onclick="savePost('${post.id}')"
+>
+🔖
+</button>
+
+</div>
+
+<div class="info">
+
+<b>
+${post.likes||0}
+</b>
+لایک
+
+</div>
+
+<div class="info caption">
+
+<b>
+${escapeHTML(post.username||"کاربر")}
+</b>
+
+${escapeHTML(post.caption||"")}
+
+</div>
+
+<div
+class="info muted"
+onclick="openComments('${post.id}')"
+>
+مشاهده نظرات
+</div>
+
+`;
+
+container.appendChild(article);
+
+}
+
+
+/* =====================================================
+   آپلود عکس
+   ===================================================== */
+
+async function uploadImage(file){
+
+const extension=
+file.name.split(".").pop();
+
+const path=
+localUser+"/"+Date.now()+"."+extension;
+
+const {error}=await supabaseClient
+.storage
+.from("posts")
+.upload(path,file);
+
+if(error){
+
+console.error(error);
+
+return null;
+
+}
+
+const {data}=supabaseClient
+.storage
+.from("posts")
+.getPublicUrl(path);
+
+return data.publicUrl;
+
+}
+
+
+/* =====================================================
+   انتشار پست
+   ===================================================== */
+
+async function publishPost(){
+
+const file=
+document.getElementById("postFile").files[0];
+
+const caption=
+document.getElementById("caption").value;
+
+const hashtags=
+document.getElementById("hashtags").value;
+
+if(!file){
+
+toast("عکس انتخاب کنید");
+
+return;
+
+}
+
+toast("در حال آپلود...");
+
+const imageUrl=
+await uploadImage(file);
+
+if(!imageUrl){
+
+toast("آپلود ناموفق بود");
+
+return;
+
+}
+
+const {error}=
+await supabaseClient
+.from("posts")
+.insert({
+
+user_id:localUser,
+
+username:profile.name,
+
+avatar:profile.avatar,
+
+image_url:imageUrl,
+
+caption:
+caption+" "+hashtags,
+
+likes:0
+
+});
+
+if(error){
+
+console.error(error);
+
+toast("خطا در انتشار");
+
+return;
+
+}
+
+document.getElementById("postFile").value="";
+
+document.getElementById("caption").value="";
+
+document.getElementById("hashtags").value="";
+
+document.getElementById("preview").style.display="none";
+
+closeModal("createModal");
+
+toast("پست منتشر شد 🎉");
+
+loadPosts();
+
+}
+
+
+/* =====================================================
+   لایک
+   ===================================================== */
+
+async function likePost(id){
+
+const {data:post}=await supabaseClient
+.from("posts")
+.select("likes")
+.eq("id",id)
+.single();
+
+if(!post)return;
+
+await supabaseClient
+.from("posts")
+.update({
+likes:(post.likes||0)+1
+})
+.eq("id",id);
+
+loadPosts();
+
+}
+
+
+/* =====================================================
+   کامنت
+   ===================================================== */
+
+async function openComments(id){
+
+currentPost=id;
+
+const {data}=await supabaseClient
+.from("comments")
+.select("*")
+.eq("post_id",id)
+.order("created_at",{ascending:true});
+
+let list=document.getElementById("commentList");
+
+list.innerHTML="";
+
+if(!data||!data.length){
+
+list.innerHTML=
+"<div class='empty'>هنوز نظری وجود ندارد.</div>";
+
+}else{
+
+data.forEach(c=>{
+
+list.innerHTML+=`
+
+<div class="comment">
+
+<b>
+${escapeHTML(c.username)}
+</b>
+
+<br>
+
+${escapeHTML(c.text)}
+
+</div>
+
+`;
+
+});
+
+}
+
+document
+.getElementById("commentModal")
+.classList.add("show");
+
+}
+
+
+async function sendComment(){
+
+const input=
+document.getElementById("commentInput");
+
+const text=input.value.trim();
+
+if(!text||!currentPost)return;
+
+await supabaseClient
+.from("comments")
+.insert({
+
+post_id:currentPost,
+
+user_id:localUser,
+
+username:profile.name,
+
+text:text
+
+});
+
+input.value="";
+
+openComments(currentPost);
+
+}
+
+
+/* =====================================================
+   حذف پست خود کاربر
+   ===================================================== */
+
+async function deletePost(id,userId){
+
+if(userId!==localUser){
+
+toast("این پست متعلق به شما نیست");
+
+return;
+
+}
+
+if(!confirm("پست حذف شود؟"))return;
+
+await supabaseClient
+.from("posts")
+.delete()
+.eq("id",id)
+.eq("user_id",localUser);
+
+loadPosts();
+
+}
+
+
+/* =====================================================
+   پروفایل
+   ===================================================== */
+
+function editProfile(){
+
+document.getElementById("profileName").value=
+profile.name;
+
+document
+.getElementById("profileModal")
+.classList.add("show");
+
+}
+
+
+async function saveProfile(){
+
+const name=
+document.getElementById("profileName")
+.value.trim();
+
+if(name)
+profile.name=name;
+
+const file=
+document.getElementById("avatarFile")
+.files[0];
+
+if(file){
+
+const reader=new FileReader();
+
+reader.onload=function(){
+
+profile.avatar=reader.result;
+
+localStorage.setItem(
+"instax_profile",
+JSON.stringify(profile)
+);
+
+updateProfileUI();
+
+closeModal("profileModal");
+
+};
+
+reader.readAsDataURL(file);
+
+}else{
+
+localStorage.setItem(
+"instax_profile",
+JSON.stringify(profile)
+);
+
+updateProfileUI();
+
+closeModal("profileModal");
+
+}
+
+}
+
+
+/* =====================================================
+   پست‌های پروفایل
+   ===================================================== */
+
+async function loadMyPosts(){
+
+const {data}=await supabaseClient
+.from("posts")
+.select("*")
+.eq("user_id",localUser)
+.order("created_at",{ascending:false});
+
+document.getElementById("postCount")
+.textContent=data?.length||0;
+
+document.getElementById("myGrid").innerHTML=
+(data||[])
+.map(p=>`<img src="${p.image_url}">`)
+.join("");
+
+}
+
+
+/* =====================================================
+   جستجو
+   ===================================================== */
+
+async function searchPosts(q){
+
+q=q.trim();
+
+if(!q){
+
+document.getElementById("searchResults").innerHTML="";
+
+return;
+
+}
+
+const {data}=await supabaseClient
+.from("posts")
+.select("*")
+.ilike("caption","%"+q+"%")
+.order("created_at",{ascending:false});
+
+const result=
+document.getElementById("searchResults");
+
+result.innerHTML="";
+
+(data||[]).forEach(p=>renderPost(p,result));
+
+}
+
+
+/* =====================================================
+   ذخیره محلی
+   ===================================================== */
+
+function savePost(id){
+
+let saved=
+JSON.parse(
+localStorage.getItem("saved_posts")||"[]"
+);
+
+if(saved.includes(id)){
+
+saved=saved.filter(x=>x!==id);
+
+toast("از ذخیره‌ها حذف شد");
+
+}else{
+
+saved.push(id);
+
+toast("پست ذخیره شد 🔖");
+
+}
+
+localStorage.setItem(
+"saved_posts",
+JSON.stringify(saved)
+);
+
+}
+
+
+/* =====================================================
+   اشتراک‌گذاری
+   ===================================================== */
+
+function sharePost(){
+
+if(navigator.share){
+
+navigator.share({
+title:"InstaX",
+text:"یک پست جالب در InstaX"
+});
+
+}else{
+
+navigator.clipboard?.writeText(location.href);
+
+toast("لینک کپی شد");
+
+}
+
+}
+
+
+/* =====================================================
+   رابط کاربری
+   ===================================================== */
+
+function openCreate(){
+
+document
+.getElementById("createModal")
+.classList.add("show");
+
+}
+
+function closeModal(id){
+
+document
+.getElementById(id)
+.classList.remove("show");
+
+}
+
+function previewImage(event){
+
+const file=event.target.files[0];
+
+if(!file)return;
+
+const reader=new FileReader();
+
+reader.onload=function(){
+
+const img=
+document.getElementById("preview");
+
+img.src=reader.result;
+
+img.style.display="block";
+
+};
+
+reader.readAsDataURL(file);
+
+}
+
+function toggleDark(){
+
+document.body.classList.toggle("dark");
+
+localStorage.setItem(
+"dark",
+document.body.classList.contains("dark")
+);
+
+}
+
+if(localStorage.getItem("dark")==="true")
+document.body.classList.add("dark");
+
+
+function toast(text){
+
+const t=
+document.getElementById("toast");
+
+t.textContent=text;
+
+t.classList.add("show");
+
+setTimeout(
+()=>t.classList.remove("show"),
+1800
+);
+
+}
+
+
+function escapeHTML(text){
+
+return String(text||"")
+.replace(/[&<>"']/g,function(c){
+
+return {
+
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#039;"
+
+}[c];
+
+});
+
+}
+
+
+/* =====================================================
+   Realtime
+   ===================================================== */
+
+supabaseClient
+.channel("posts-realtime")
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"posts"
+},
+payload=>{
+
+loadPosts();
+
+}
+)
+.subscribe();
+
+
+/* =====================================================
+   شروع
+   ===================================================== */
+
+loadPosts();
+
+</script>
+
+</body>
+</html>
